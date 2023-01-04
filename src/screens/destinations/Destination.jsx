@@ -1,12 +1,28 @@
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import BottomNavigations from '../../components/BottomNavigations';
-const func = require('../../components/functions');
+import axios from 'axios';
+// import { getApiData } from '../../helpers/api'
+// const func = require('../../components/functions');
 
 export default function Destination({navigation}) {
 
-    const [destinations, setDestination] = useState(func.apiDestinations)
+    const [laoding, setLoading] = useState(true)
+    const [destinations, setDestinations] = useState([])
+    // const [destinations, setDestination] = useState(func.apiDestinations)
+
+    const getDestinations = async() => {                           
+        axios.get('https://travelblissbackend-production.up.railway.app/api/destinations')
+        .then(function (response) {
+            setDestinations(response.data.destinations)
+            setLoading(false)
+        })
+        .catch(function (error) {
+            console.log(error)
+            setLoading(false)
+        });
+    }
 
     useEffect(() => {
         // set navigation options
@@ -16,6 +32,8 @@ export default function Destination({navigation}) {
           }, 
           headerTintColor: '#fff',
         });
+
+        getDestinations();
     
       }, [navigation])
 
@@ -25,11 +43,12 @@ export default function Destination({navigation}) {
             <StatusBar style="auto" />
             {/* main content starts */}
             <ScrollView>
+
                 <Text style={styles.text}>Popular Destinations</Text>
                 <Text style={styles.secondaryText}>"In the end, we only regret the chances we didn't take". Once the Travel bug bites there is no known antidote.</Text>
 
                 {/* designations grid */}
-                {destinations && (
+                {!laoding ? <>
                     <View style={styles.flexContainer}>
                         {destinations.map((destination,index) => (
                             <TouchableOpacity style={styles.imageContainer} key={index} onPress={() => navigation.navigate('Single', {destination: destination, title: destination.name})}>
@@ -40,7 +59,13 @@ export default function Destination({navigation}) {
                             </TouchableOpacity>
                         ))}
                     </View>
-                )}
+                
+                </> : <>
+                    <View style={styles.laodingContainer}>
+                        <ActivityIndicator size="large" color="#34d399" />
+                    </View>
+                </>
+                }
             </ScrollView>
 
             {/* bottom navigations */}
@@ -70,6 +95,14 @@ const styles = StyleSheet.create({
         fontWeight: 'normal',
         color: 'gray',
         lineHeight: 26,
+    },
+    laodingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+        minHeight: 250,
     },
     flexContainer: {
         display: 'flex',
